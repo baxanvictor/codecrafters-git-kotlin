@@ -21,6 +21,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-cli-jvm:0.3.6")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
