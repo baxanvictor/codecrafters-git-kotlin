@@ -9,12 +9,20 @@ sealed interface Command {
 
     data class CatFile(
         override val commandName: String,
-        val options: List<Option>
+        val options: Options
     ) : Command {
-        sealed interface Option {
-            data class PrettyPrint(
-                val sha1: Sha1
-            ) : Option
-        }
+        data class Options(
+            val sha1: Sha1
+        )
+    }
+
+    data class HashObject(
+        override val commandName: String,
+        val options: Options
+    ) : Command {
+        data class Options(
+            val isWriteEnabled: Boolean,
+            val filename: String
+        )
     }
 }

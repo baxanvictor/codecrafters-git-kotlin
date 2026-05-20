@@ -13,6 +13,7 @@ fun buildCommandFromArgs(args: Array<String>): Command {
         when (commandName) {
             "init" -> buildInitCommand(optionsArgs, commandName)
             "cat-file" -> buildCatFileCommand(optionsArgs, argsParser, commandName)
+            "hash-object" -> buildHashObjectCommand(optionsArgs, argsParser, commandName)
             else -> throw CommandNotSupportedException(commandName)
         }
     } ?: throw RuntimeException("No command specified")
