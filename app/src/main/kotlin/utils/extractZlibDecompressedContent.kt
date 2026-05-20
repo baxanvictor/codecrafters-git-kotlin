@@ -1,5 +1,5 @@
 package utils
 
 fun String.extractZlibDecompressedContent(): String {
-    return substring(indexOf(Constants.NULL_BYTE) + 1)
+    return substringAfter(Constants.NULL_BYTE)
 }

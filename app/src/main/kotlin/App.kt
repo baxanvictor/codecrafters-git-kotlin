@@ -1,4 +1,4 @@
-import buildcommand.buildCommandFromArgs
+import buildcommand.buildCommand
 import processcommand.process
 import kotlin.system.exitProcess
 
@@ -7,7 +7,7 @@ fun main(args: Array<String>) {
     System.err.println("Logs from your program will appear here!")
 
     try {
-        val command = buildCommandFromArgs(args)
+        val command = buildCommand(args)
         command.process()
     } catch (e: Exception) {
         e.message?.let { println(it) }

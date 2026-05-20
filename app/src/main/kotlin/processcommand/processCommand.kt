@@ -7,5 +7,6 @@ fun Command.process() {
         is Command.Init -> processInit()
         is Command.CatFile -> processCatFile()
         is Command.HashObject -> processHashObject()
+        is Command.Tree -> processTreeCommand()
     }
 }

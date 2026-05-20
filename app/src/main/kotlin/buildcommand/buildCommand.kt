@@ -4,7 +4,7 @@ import kotlinx.cli.ArgParser
 import model.Command
 import model.exception.CommandNotSupportedException
 
-fun buildCommandFromArgs(args: Array<String>): Command {
+fun buildCommand(args: Array<String>): Command {
     return args.firstOrNull()?.let { commandName ->
         val argsParser = ArgParser("codecrafters-git")
 
@@ -14,6 +14,7 @@ fun buildCommandFromArgs(args: Array<String>): Command {
             "init" -> buildInitCommand(optionsArgs, commandName)
             "cat-file" -> buildCatFileCommand(optionsArgs, argsParser, commandName)
             "hash-object" -> buildHashObjectCommand(optionsArgs, argsParser, commandName)
+            "ls-tree" -> buildTreeCommand(optionsArgs, argsParser, commandName)
             else -> throw CommandNotSupportedException(commandName)
         }
     } ?: throw RuntimeException("No command specified")

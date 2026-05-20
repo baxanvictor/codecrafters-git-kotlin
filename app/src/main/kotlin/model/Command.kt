@@ -12,7 +12,7 @@ sealed interface Command {
         val options: Options
     ) : Command {
         data class Options(
-            val sha1: Sha1
+            val sha: Sha1
         )
     }
 
@@ -23,6 +23,16 @@ sealed interface Command {
         data class Options(
             val isWriteEnabled: Boolean,
             val filename: String
+        )
+    }
+
+    data class Tree(
+        override val commandName: String,
+        val options: Options
+    ) : Command {
+        data class Options(
+            val nameOnly: Boolean,
+            val treeSha: Sha1
         )
     }
 }

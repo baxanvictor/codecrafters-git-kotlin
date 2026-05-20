@@ -5,7 +5,7 @@ import kotlinx.cli.ArgType
 import model.Command
 import model.Sha1
 import model.exception.InvalidSha1Exception
-import utils.isValid
+import utils.isValid40Byte
 
 fun buildCatFileCommand(
     args: Array<String>,
@@ -23,11 +23,11 @@ fun buildCatFileCommand(
         val sha1 = Sha1(
             value = prettyPrintSha1 ?: throw RuntimeException("Missing $commandName pretty print arg value")
         )
-        if (!sha1.isValid()) {
+        if (!sha1.isValid40Byte()) {
             throw InvalidSha1Exception(sha1.value)
         }
 
-        Command.CatFile.Options(sha1 = sha1)
+        Command.CatFile.Options(sha = sha1)
     }
 
     return Command.CatFile(

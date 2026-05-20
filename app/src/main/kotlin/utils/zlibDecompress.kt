@@ -1,10 +1,9 @@
 package utils
 
 import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
 import java.util.zip.Inflater
 
-fun ByteArray.zlibDecompress(): String {
+fun ByteArray.zlibDecompress(): ByteArray {
     val inflater = Inflater()
     val outputStream = ByteArrayOutputStream()
 
@@ -19,6 +18,6 @@ fun ByteArray.zlibDecompress(): String {
         }
 
         inflater.end()
-        outputStream.toString(StandardCharsets.UTF_8)
+        outputStream.toByteArray()
     }
 }
