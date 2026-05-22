@@ -14,7 +14,8 @@ fun buildCommand(args: Array<String>): Command {
             "init" -> buildInitCommand(optionsArgs, commandName)
             "cat-file" -> buildCatFileCommand(optionsArgs, argsParser, commandName)
             "hash-object" -> buildHashObjectCommand(optionsArgs, argsParser, commandName)
-            "ls-tree" -> buildTreeCommand(optionsArgs, argsParser, commandName)
+            "ls-tree" -> buildLsTreeCommand(optionsArgs, argsParser, commandName)
+            "write-tree" -> buildWriteTreeCommand(commandName)
             else -> throw CommandNotSupportedException(commandName)
         }
     } ?: throw RuntimeException("No command specified")

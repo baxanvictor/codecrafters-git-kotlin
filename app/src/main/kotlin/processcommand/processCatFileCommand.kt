@@ -1,7 +1,7 @@
 package processcommand
 
 import model.Command
-import model.Sha1
+import model.Sha1Hex
 import utils.extractZlibDecompressedContent
 import utils.toFullPath
 import utils.zlibDecompress
@@ -12,7 +12,7 @@ fun Command.CatFile.processCatFile() {
     prettyPrintObject(options.sha)
 }
 
-private fun prettyPrintObject(sha1: Sha1) {
+private fun prettyPrintObject(sha1: Sha1Hex) {
     val path = sha1.toFullPath()
     val rawBytes = Files.readAllBytes(path)
     val decompressedContent = rawBytes.zlibDecompress().toString(StandardCharsets.UTF_8)

@@ -1,15 +1,11 @@
 package processcommand
 
+import model.ByteArrayOutputStreamInput
 import model.Command
-import model.Sha1
+import model.GitObjectType
+import model.Sha1Hex
 import model.exception.InvalidSha1Exception
-import utils.Constants
-import utils.isValid40Byte
-import utils.sha1Encode
-import utils.toDirPath
-import utils.toFullPath
-import utils.zlibCompress
-import java.nio.charset.StandardCharsets
+import utils.*
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -17,14 +13,24 @@ import kotlin.io.path.notExists
 
 fun Command.HashObject.processHashObject() {
     val filePath = Path.of(options.filename)
-    val fileContents = Files.readString(filePath, StandardCharsets.UTF_8)
+    val fileContents = Files.readAllBytes(filePath)
 
-    val contentsToEncode = "blob ${fileContents.length}${Constants.NULL_BYTE}$fileContents"
-
-    val sha1 = Sha1(
-        value = contentsToEncode.sha1Encode()
+    val contentsToEncode = buildByteArrayFromInputs(
+        inputs = listOf(
+            ByteArrayOutputStreamInput.ByteArrayInput(GitObjectType.BLOB.type.toByteArray()),
+            ByteArrayOutputStreamInput.IntInput(' '.code),
+            ByteArrayOutputStreamInput.ByteArrayInput(fileContents.size.toString().toByteArray()),
+            ByteArrayOutputStreamInput.IntInput(Constants.NULL_BYTE.code),
+            ByteArrayOutputStreamInput.ByteArrayInput(fileContents)
+        )
     )
-    if (!sha1.isValid40Byte()) {
+
+    val sha1 = Sha1Hex(
+        value = contentsToEncode
+            .sha1()
+            .toHexString()
+    )
+    if (!sha1.isValid()) {
         throw InvalidSha1Exception(sha1.value)
     }
 

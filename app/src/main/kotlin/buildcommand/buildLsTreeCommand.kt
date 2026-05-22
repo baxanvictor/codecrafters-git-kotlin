@@ -4,11 +4,11 @@ import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import model.Command
-import model.Sha1
+import model.Sha1Hex
 import model.exception.InvalidSha1Exception
-import utils.isValid40Byte
+import utils.isValid
 
-fun buildTreeCommand(
+fun buildLsTreeCommand(
     args: Array<String>,
     argsParser: ArgParser,
     commandName: String
@@ -27,18 +27,18 @@ fun buildTreeCommand(
 
         parse(args)
 
-        val treeSha = Sha1(value = sha)
-        if (!treeSha.isValid40Byte()) {
+        val treeSha = Sha1Hex(value = sha)
+        if (!treeSha.isValid()) {
             throw InvalidSha1Exception(sha)
         }
 
-        Command.Tree.Options(
+        Command.LsTree.Options(
             nameOnly = nameOnly,
             treeSha = treeSha
         )
     }
 
-    return Command.Tree(
+    return Command.LsTree(
         commandName = commandName,
         options = options
     )

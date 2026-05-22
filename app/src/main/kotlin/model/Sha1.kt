@@ -1,4 +1,7 @@
 package model
 
 @JvmInline
-value class Sha1(val value: String)
+value class Sha1Hex(val value: String)
+
+@JvmInline
+value class Sha1Bytes(val value: ByteArray)

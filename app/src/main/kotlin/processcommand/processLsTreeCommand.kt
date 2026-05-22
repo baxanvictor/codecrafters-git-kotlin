@@ -5,20 +5,20 @@ import utils.*
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-fun Command.Tree.processTreeCommand() {
+fun Command.LsTree.processLsTreeCommand() {
     val treePath = options.treeSha.toFullPath()
     val treeBytes = Files.readAllBytes(treePath)
     val decompressedTreeContents = treeBytes.zlibDecompress()
-    val tree = parseTreeContents(decompressedTreeContents)
+    val treeEntries = parseTreeContents(contentBytes = decompressedTreeContents)
 
     if (options.nameOnly) {
-        tree.entries.forEach { entry ->
+        treeEntries.forEach { entry ->
             println(entry.fsEntryName)
         }
     }
 }
 
-private fun parseTreeContents(contentBytes: ByteArray): GitTree {
+private fun parseTreeContents(contentBytes: ByteArray): List<GitTreeEntry> {
     val nullByteCodeAsByte = Constants.NULL_BYTE.code.toByte()
     val emptySpaceAsByte = ' '.code.toByte()
 
@@ -44,13 +44,13 @@ private fun parseTreeContents(contentBytes: ByteArray): GitTree {
         throw RuntimeException("Wrong contents size: ${treeContents.size}")
     }
 
-    val treeEntries = buildList {
+   return buildList {
         var start = 0
 
         var mode: GitTreeEntryMode? = null
         var fsEntryName: String? = null
         var shaBytes = 0
-        var sha: Sha1? = null
+        var sha: Sha1Bytes? = null
 
         for (i in treeContents.indices) {
             if (treeContents[i] == emptySpaceAsByte) {
@@ -85,8 +85,8 @@ private fun parseTreeContents(contentBytes: ByteArray): GitTree {
             shaBytes++
 
             if (shaBytes == Constants.TREE_INNER_SHA_LENGTH) {
-                sha = Sha1(
-                    value = treeContents.copyOfRange(start, i + 1).toHexString()
+                sha = Sha1Bytes(
+                    value = treeContents.copyOfRange(start, i + 1)
                 )
 
                 start = i + 1
@@ -110,8 +110,4 @@ private fun parseTreeContents(contentBytes: ByteArray): GitTree {
             sha = null
         }
     }
-
-    return GitTree(
-        entries = treeEntries
-    )
 }

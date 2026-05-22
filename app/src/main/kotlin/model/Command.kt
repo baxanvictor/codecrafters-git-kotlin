@@ -12,7 +12,7 @@ sealed interface Command {
         val options: Options
     ) : Command {
         data class Options(
-            val sha: Sha1
+            val sha: Sha1Hex
         )
     }
 
@@ -26,13 +26,17 @@ sealed interface Command {
         )
     }
 
-    data class Tree(
+    data class LsTree(
         override val commandName: String,
         val options: Options
     ) : Command {
         data class Options(
             val nameOnly: Boolean,
-            val treeSha: Sha1
+            val treeSha: Sha1Hex
         )
     }
+
+    data class WriteTree(
+        override val commandName: String
+    ) : Command
 }

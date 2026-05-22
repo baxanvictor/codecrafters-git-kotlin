@@ -1,5 +1,5 @@
 package utils
 
-import model.Sha1
+import model.Sha1Hex
 
-fun Sha1.isValid40Byte() = value.length == 40
+fun Sha1Hex.isValid() = value.length == 40

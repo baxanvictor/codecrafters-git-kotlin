@@ -1,5 +1,7 @@
 package utils
 
+import java.security.MessageDigest
+
 fun ByteArray.split(delimiter: Byte): List<ByteArray> {
     return buildList {
         val byteArray = this@split
@@ -38,4 +40,10 @@ fun ByteArray.byteArrayAfter(delimiter: Byte): ByteArray {
 
 fun ByteArray.toHexString(): String {
     return joinToString("") { "%02x".format(it) }
+}
+
+fun ByteArray.sha1(): ByteArray {
+    return MessageDigest
+        .getInstance("SHA-1")
+        .digest(this)
 }

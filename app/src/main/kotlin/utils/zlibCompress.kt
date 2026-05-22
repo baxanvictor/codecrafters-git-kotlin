@@ -1,14 +1,11 @@
 package utils
 
-import java.nio.charset.StandardCharsets
 import java.util.zip.Deflater
 
-fun String.zlibCompress(): ByteArray {
-    val input = toByteArray(StandardCharsets.UTF_8)
-
-    val output = ByteArray(input.size * 4)
+fun ByteArray.zlibCompress(): ByteArray {
+    val output = ByteArray(size * 4)
     val compressor = Deflater().apply {
-        setInput(input)
+        setInput(this@zlibCompress)
         finish()
     }
     val compressedDataLength = compressor.deflate(output)
