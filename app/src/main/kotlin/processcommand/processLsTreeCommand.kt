@@ -5,15 +5,17 @@ import utils.*
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-fun Command.LsTree.processLsTreeCommand() {
-    val treePath = options.treeSha.toFullPath()
-    val treeBytes = Files.readAllBytes(treePath)
-    val decompressedTreeContents = treeBytes.zlibDecompress()
-    val treeEntries = parseTreeContents(contentBytes = decompressedTreeContents)
+fun processLsTreeCommand(command: Command.LsTree) {
+    command.run {
+        val treePath = treeSha.toFullPath()
+        val treeBytes = Files.readAllBytes(treePath)
+        val decompressedTreeContents = treeBytes.zlibDecompress()
+        val treeEntries = parseTreeContents(contentBytes = decompressedTreeContents)
 
-    if (options.nameOnly) {
-        treeEntries.forEach { entry ->
-            println(entry.fsEntryName)
+        if (options.nameOnly) {
+            treeEntries.forEach { entry ->
+                println(entry.fsEntryName)
+            }
         }
     }
 }

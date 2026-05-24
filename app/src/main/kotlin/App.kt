@@ -1,5 +1,5 @@
 import buildcommand.buildCommand
-import processcommand.process
+import processcommand.processCommand
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -8,7 +8,7 @@ fun main(args: Array<String>) {
 
     try {
         val command = buildCommand(args)
-        command.process()
+        processCommand(command)
     } catch (e: Exception) {
         e.message?.let { println(it) }
         exitProcess(1)

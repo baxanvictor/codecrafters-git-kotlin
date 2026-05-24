@@ -1,5 +1,6 @@
 package utils
 
+import model.Sha1Bytes
 import model.Sha1Hex
 import java.nio.file.Path
 
@@ -9,6 +10,12 @@ fun Sha1Hex.toFullPath(): Path {
 
 fun Sha1Hex.toDirPath(): Path {
     return Path.of("${Constants.GIT_ROOT_DIR}/${toObjectDirectory()}")
+}
+
+fun Sha1Bytes.toSha1Hex(): Sha1Hex {
+    return Sha1Hex(
+        value = value.toHexString()
+    )
 }
 
 private fun Sha1Hex.toObjectLocation(): String {

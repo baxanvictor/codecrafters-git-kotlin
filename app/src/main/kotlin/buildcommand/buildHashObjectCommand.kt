@@ -10,28 +10,24 @@ fun buildHashObjectCommand(
     argsParser: ArgParser,
     commandName: String
 ): Command {
-    val options = argsParser.run {
-        val write by option(
-            type = ArgType.Boolean,
-            shortName = "w",
-            description = "Enable write mode"
-        ).default(false)
+    val write by argsParser.option(
+        type = ArgType.Boolean,
+        shortName = "w",
+        description = "Enable write mode"
+    ).default(false)
 
-        val filename by argument(
-            type = ArgType.String,
-            description = "Name of the file to hash"
-        )
+    val filename by argsParser.argument(
+        type = ArgType.String,
+        description = "Name of the file to hash"
+    )
 
-        parse(args)
-
-        Command.HashObject.Options(
-            isWriteEnabled = write,
-            filename = filename
-        )
-    }
+    argsParser.parse(args)
 
     return Command.HashObject(
         commandName = commandName,
-        options = options
+        filename = filename,
+        options = Command.HashObject.Options(
+            isWriteEnabled = write,
+        )
     )
 }

@@ -13,33 +13,29 @@ fun buildLsTreeCommand(
     argsParser: ArgParser,
     commandName: String
 ): Command {
-    val options = argsParser.run {
-        val nameOnly by option(
-            type = ArgType.Boolean,
-            fullName = "name-only",
-            description = "Flag to only display the names of each tree leaf"
-        ).default(false)
+    val nameOnly by argsParser.option(
+        type = ArgType.Boolean,
+        fullName = "name-only",
+        description = "Flag to only display the names of each tree leaf"
+    ).default(false)
 
-        val sha by argument(
-            type = ArgType.String,
-            description = "GitTree sha hash"
-        )
+    val sha by argsParser.argument(
+        type = ArgType.String,
+        description = "GitTree sha hash"
+    )
 
-        parse(args)
+    argsParser.parse(args)
 
-        val treeSha = Sha1Hex(value = sha)
-        if (!treeSha.isValid()) {
-            throw InvalidSha1Exception(sha)
-        }
-
-        Command.LsTree.Options(
-            nameOnly = nameOnly,
-            treeSha = treeSha
-        )
+    val treeSha = Sha1Hex(value = sha)
+    if (!treeSha.isValid()) {
+        throw InvalidSha1Exception(sha)
     }
 
     return Command.LsTree(
         commandName = commandName,
-        options = options
+        treeSha = treeSha,
+        options = Command.LsTree.Options(
+            nameOnly = nameOnly
+        )
     )
 }

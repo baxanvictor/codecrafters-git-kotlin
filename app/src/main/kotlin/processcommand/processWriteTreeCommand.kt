@@ -6,7 +6,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
 
-fun Command.WriteTree.processWriteTreeCommand() {
+fun processWriteTreeCommand(command: Command.WriteTree) {
     val currentPath = Path.of(".")
 
     val result = createTree(currentPath)
@@ -86,29 +86,15 @@ private fun writeGitObject(
     objectType: GitObjectType,
     innerContent: List<ByteArray>
 ): Sha1Bytes {
-    val gitObject = buildByteArrayFromInputs(
-        inputs = buildList {
-            add(ByteArrayOutputStreamInput.ByteArrayInput(objectType.type.toByteArray()))
-            add(ByteArrayOutputStreamInput.IntInput(' '.code))
-            add(
-                ByteArrayOutputStreamInput.ByteArrayInput(innerContent.sumOf { it.size }.toString().toByteArray())
-            )
-            add(ByteArrayOutputStreamInput.IntInput(Constants.NULL_BYTE.code))
-            innerContent.forEach { add(ByteArrayOutputStreamInput.ByteArrayInput(it)) }
-        }
+    val gitObjectContent = buildGitObjectContent(
+        objectType = objectType,
+        contentLength = innerContent.sumOf { it.size },
+        content = buildByteArrayFromInputs(
+            inputs = innerContent.map { ByteArrayOutputStreamInput.ByteArrayInput(it) }
+        )
     )
 
-    val sha = gitObject.sha1()
-    val compressed = gitObject.zlibCompress()
-
-    val writePath = Sha1Hex(sha.toHexString()).toFullPath()
-    if (writePath.notExists()) {
-        Files.createDirectories(writePath.parent)
-    }
-
-    Files.write(writePath, compressed)
-
-    return Sha1Bytes(sha)
+    return writeGitObject(gitObjectContent)
 }
 
 private data class CreateTreeResult(

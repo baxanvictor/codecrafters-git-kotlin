@@ -2,12 +2,13 @@ package processcommand
 
 import model.Command
 
-fun Command.process() {
-    when (this) {
-        is Command.Init -> processInit()
-        is Command.CatFile -> processCatFile()
-        is Command.HashObject -> processHashObject()
-        is Command.LsTree -> processLsTreeCommand()
-        is Command.WriteTree -> processWriteTreeCommand()
+fun processCommand(command: Command) {
+    when (command) {
+        is Command.Init -> processInitCommand(command)
+        is Command.CatFile -> processCatFileCommand(command)
+        is Command.HashObject -> processHashObjectCommand(command)
+        is Command.LsTree -> processLsTreeCommand(command)
+        is Command.WriteTree -> processWriteTreeCommand(command)
+        is Command.CommitTree -> processCommitTreeCommand(command)
     }
 }

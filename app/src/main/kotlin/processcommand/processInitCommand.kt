@@ -3,7 +3,7 @@ package processcommand
 import model.Command
 import java.io.File
 
-fun Command.Init.processInit() {
+fun processInitCommand(command: Command.Init) {
     val gitDir = File(".git")
     gitDir.mkdir()
     File(gitDir, "objects").mkdir()

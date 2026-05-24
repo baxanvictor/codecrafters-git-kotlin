@@ -8,12 +8,8 @@ import utils.zlibDecompress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-fun Command.CatFile.processCatFile() {
-    prettyPrintObject(options.sha)
-}
-
-private fun prettyPrintObject(sha1: Sha1Hex) {
-    val path = sha1.toFullPath()
+fun processCatFileCommand(command: Command.CatFile) {
+    val path = command.options.sha.toFullPath()
     val rawBytes = Files.readAllBytes(path)
     val decompressedContent = rawBytes.zlibDecompress().toString(StandardCharsets.UTF_8)
     val content = decompressedContent.extractZlibDecompressedContent()

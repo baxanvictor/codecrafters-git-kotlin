@@ -16,6 +16,7 @@ fun buildCommand(args: Array<String>): Command {
             "hash-object" -> buildHashObjectCommand(optionsArgs, argsParser, commandName)
             "ls-tree" -> buildLsTreeCommand(optionsArgs, argsParser, commandName)
             "write-tree" -> buildWriteTreeCommand(commandName)
+            "commit-tree" -> buildCommitTreeCommand(optionsArgs, argsParser, commandName)
             else -> throw CommandNotSupportedException(commandName)
         }
     } ?: throw RuntimeException("No command specified")
