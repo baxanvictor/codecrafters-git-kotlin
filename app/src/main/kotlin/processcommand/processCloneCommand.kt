@@ -12,6 +12,7 @@ import utils.*
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createParentDirectories
+import kotlin.io.path.writeLines
 
 fun processCloneCommand(command: Command.Clone) {
     command.run {
@@ -51,7 +52,7 @@ fun processCloneCommand(command: Command.Clone) {
         val packFile = parseNegotiateUploadPackPktLines(negotiateUploadPackPktLines)
         parsePackFileAndWriteGitObjects(packFile, targetDir)
 
-        writeGitRefs(gitDiscoveryResult.refs, targetDir, commitSha)
+        writeGitRefs(gitDiscoveryResult.refs, targetDir)
 
         checkout(commitSha, targetDir)
     }
@@ -162,7 +163,8 @@ private fun parsePktLines(lines: List<PktLine>): GitDiscoveryResult {
                 val refAndCapabilities = decodedData.split(Constants.NULL_BYTE)
                 when (refAndCapabilities.size) {
                     2 -> {
-                        refs.add(extractGitRef(refAndCapabilities.first()))
+                        val ref = extractGitRef(refAndCapabilities.first())
+                        ref?.let(refs::add)
                         capabilities.addAll(
                             refAndCapabilities
                                 .last()
@@ -172,7 +174,7 @@ private fun parsePktLines(lines: List<PktLine>): GitDiscoveryResult {
                         )
                     }
 
-                    1 -> refs.add(extractGitRef(decodedData))
+                    1 -> extractGitRef(decodedData)?.let(refs::add)
 
                     else -> throw RuntimeException("Wrong line format: $decodedData")
                 }
@@ -311,19 +313,26 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
     }
 }
 
-private fun writeGitRefs(refs: List<GitRef>, targetDir: String, commitSha: String) {
+private fun writeGitRefs(refs: List<GitRef>, targetDir: String) {
     val rootGitPath = gitPath(rootDir = targetDir)
 
-    val path = rootGitPath
-        .resolve("refs/heads/master")
-    path.createParentDirectories()
-    path.writeString("$commitSha\n")
+    refs.forEach { ref ->
+        val refPath = rootGitPath
+            .resolve(ref.name)
+            .also { it.createParentDirectories() }
 
-    val headPath = rootGitPath
-        .resolve("HEAD")
-    headPath.createParentDirectories()
+        when (ref) {
+            is GitRef.Head -> {
+                refs
+                    .firstOrNull { it is GitRef.BranchTip }
+                    ?.let { refPath.writeLines(lines = listOf(it.name)) }
+            }
 
-    headPath.writeString("ref: refs/heads/master\n")
+            is GitRef.BranchTip -> {
+                refPath.writeLines(lines = listOf(ref.commitSha))
+            }
+        }
+    }
 }
 
 private fun checkout(commitSha: String, targetDir: String) {
@@ -379,7 +388,7 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
     }
 }
 
-private fun extractGitRef(ref: String): GitRef {
+private fun extractGitRef(ref: String): GitRef? {
     val refPieces = ref.trim()
         .split(Constants.EMPTY_SPACE)
         .filter { it.isNotBlank() }
@@ -387,10 +396,14 @@ private fun extractGitRef(ref: String): GitRef {
         throw RuntimeException("Wrong ref format: ${ref.first()}")
     }
 
-    return GitRef(
-        name = refPieces.last(),
-        sha = refPieces.first()
-    )
+    return when (val name = refPieces.last()) {
+        "version" -> null
+        "HEAD" -> GitRef.Head(commitSha = refPieces.first())
+        else -> GitRef.BranchTip(
+            name = name,
+            commitSha = refPieces.first()
+        )
+    }
 }
 
 private fun GitDiscoveryResult.findCommitSha(): String {
@@ -414,11 +427,11 @@ private fun GitDiscoveryResult.findCommitSha(): String {
         ?: refs
             .firstOrNull { it.name == "HEAD" }
             ?.name
-        ?: throw RuntimeException("No main or HEAD branch capability or git ref ")
+        ?: throw RuntimeException("No main or HEAD branch capability or git ref")
 
     return refs
         .firstOrNull { it.name == mainBranch }
-        ?.sha
+        ?.commitSha
         ?: throw RuntimeException("No commit sha found for identifier main branch: $mainBranch")
 }
 
