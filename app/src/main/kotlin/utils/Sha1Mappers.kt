@@ -9,11 +9,6 @@ fun Sha1Hex.toFullPath(rootDir: String? = null): Path {
     return Path.of(rootDirPath, toObjectLocation())
 }
 
-fun Sha1Hex.toDirPath(rootDir: String? = null): Path {
-    val rootDirPath = rootDir?.let { "$it/${Constants.GIT_OBJECTS_ROOT_DIR}" } ?: Constants.GIT_OBJECTS_ROOT_DIR
-    return Path.of("$rootDirPath/${toObjectDirectory()}")
-}
-
 fun Sha1Bytes.toSha1Hex(): Sha1Hex {
     return Sha1Hex(
         value = value.toHexString()

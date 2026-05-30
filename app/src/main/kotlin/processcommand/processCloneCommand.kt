@@ -11,10 +11,8 @@ import model.*
 import utils.*
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.absolute
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createParentDirectories
-import kotlin.io.path.exists
 import kotlin.io.path.writeLines
 
 fun processCloneCommand(command: Command.Clone) {
@@ -57,18 +55,7 @@ fun processCloneCommand(command: Command.Clone) {
 
         writeGitRefs(gitDiscoveryResult.refs, targetDir, commitSha)
 
-        println("Commit sha: $commitSha")
-
-        val debugPath = Path
-            .of(targetDir)
-            .resolve(".git")
-            .resolve("refs/heads/master")
-
-        //println("Git: ${debugPath.listDirectoryEntries()}")
-
         checkout(commitSha, targetDir)
-
-        println("Git: ${Files.readString(debugPath)}")
     }
 }
 
@@ -311,12 +298,8 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
         val dataStart = offset + 1
 
         if (type == GitObjectType.REF_DELTA) {
-            println("Processing REF_DELTA")
-
             val baseShaBytes = packFile.copyOfRange(dataStart, dataStart + 20)
             val baseShaHex = baseShaBytes.toHexString()
-
-            println("Base sha: $baseShaHex")
 
             val compressedStartOffset = dataStart + 20
             val deltaResult = packFile.zlibDecompress(offset = compressedStartOffset)
@@ -336,7 +319,6 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
                 objectType = baseObject.type)
 
             offset = compressedStartOffset + deltaResult.compressedBytesRead.toInt()
-            println("DONE Processing REF_DELTA")
         } else {
             val decompressResult = packFile.zlibDecompress(offset = dataStart)
 
@@ -355,8 +337,6 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
                 .resolve(Constants.GIT_OBJECTS_ROOT_DIR)
                 .resolve(Sha1Hex(gitObject.sha1().toHexString()).toObjectLocation())
                 , objectType = type)
-
-            println("Object sha: ${gitObject.sha1().toHexString()}")
 
             offset = dataStart + decompressResult.compressedBytesRead.toInt()
         }
@@ -387,7 +367,6 @@ private fun checkout(commitSha: String, targetDir: String) {
         .resolve(commitSha.take(2))
         .resolve(commitSha.drop(2))
 
-    println("Commit path: ${commitObjectPath.absolute()}")
     val commitObject = Files.readAllBytes(commitObjectPath)
     val decompressedCommitObject = commitObject.zlibDecompress().bytes
 
@@ -404,8 +383,6 @@ private fun checkout(commitSha: String, targetDir: String) {
         .of(targetDir)
 
     checkoutTree(treeSha, targetDir, rootCheckoutDir)
-
-    println("Checkout done")
 }
 
 private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: Path) {
@@ -416,21 +393,11 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
         .resolve(treeSha.take(2))
         .resolve(treeSha.drop(2))
 
-    println("Checkout dir path: ${rootCheckoutDir.absolute()}")
-    println("Tree sha: $treeSha, length: ${treeSha.length}")
-
     rootCheckoutDir.createDirectories()
 
-    println("Reading tree bytes...")
     val treeBytes = Files.readAllBytes(treePath)
-    println("Tree bytes read")
-    println("Decompressing tree bytes")
     val decompressedTreeBytes = treeBytes.zlibDecompress().bytes
-    println("Tree bytes decompressed")
-
-    println("Parsing tree...")
-    val entries = parseTreeContentsNew(decompressedTreeBytes)
-    println("Tree parsed")
+    val entries = parseTreeContents(decompressedTreeBytes)
 
     for (entry in entries) {
         val entryPath = rootCheckoutDir.resolve(entry.fsEntryName)
@@ -460,7 +427,6 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
 }
 
 private fun extractGitRef(ref: String): GitRef {
-    print("Raw ref: $ref")
     val refPieces = ref.trim()
         .split(' ')
         .filter { it.isNotBlank() }
