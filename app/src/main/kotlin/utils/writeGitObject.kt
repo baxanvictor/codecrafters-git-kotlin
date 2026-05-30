@@ -15,7 +15,7 @@ fun writeGitObject(
     val sha = gitObject.sha1()
     val compressed = gitObject.zlibCompress()
 
-    val writePath = writePath ?: Sha1Hex(sha.toHexString()).toFullPath()
+    val writePath = writePath ?: gitObjectsPath(sha = sha.toHexString())
     writePath.createParentDirectories()
 
     Files.write(writePath, compressed)

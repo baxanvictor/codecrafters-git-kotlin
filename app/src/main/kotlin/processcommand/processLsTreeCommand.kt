@@ -7,7 +7,9 @@ import java.nio.file.Files
 
 fun processLsTreeCommand(command: Command.LsTree) {
     command.run {
-        val treePath = treeSha.toFullPath()
+        val treePath = gitObjectsPath(
+            sha = treeSha.value
+        )
         val treeBytes = Files.readAllBytes(treePath)
         val decompressedTreeContents = treeBytes.zlibDecompress().bytes
         val treeEntries = parseTreeContents(contentBytes = decompressedTreeContents)

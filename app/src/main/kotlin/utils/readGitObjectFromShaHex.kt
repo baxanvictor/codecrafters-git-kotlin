@@ -6,7 +6,10 @@ import model.Sha1Hex
 import java.nio.file.Files
 
 fun readGitObjectFromShaHex(shaHex: String, rootDir: String): GitObject {
-    val objectPath = Sha1Hex(shaHex).toFullPath(rootDir)
+    val objectPath = gitObjectsPath(
+        sha = shaHex,
+        rootDir = rootDir
+    )
     val compressed = Files.readAllBytes(objectPath)
     val raw = compressed.zlibDecompress().bytes
 
