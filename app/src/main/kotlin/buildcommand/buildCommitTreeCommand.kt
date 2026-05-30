@@ -4,8 +4,6 @@ import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import model.Command
 import model.Sha1Hex
-import model.exception.InvalidSha1Exception
-import utils.isValid
 
 fun buildCommitTreeCommand(
     args: Array<String>,
@@ -31,15 +29,10 @@ fun buildCommitTreeCommand(
 
     argsParser.parse(args)
 
-    val treeSha = Sha1Hex(treeShaValue)
-    if (!treeSha.isValid()) {
-        throw InvalidSha1Exception(treeShaValue)
-    }
-
-    val parentSha = parentShaValue?.let { Sha1Hex(it) }
-    if (parentSha != null && !parentSha.isValid()) {
-        throw InvalidSha1Exception(parentSha.value)
-    }
+    val treeSha = Sha1Hex.new(treeShaValue)
+    val parentSha = Sha1Hex.new(
+        sha = parentShaValue ?: throw RuntimeException("Missing $commandName parent sha arg value")
+    )
 
     return Command.CommitTree(
         commandName = commandName,

@@ -2,7 +2,6 @@ package buildcommand
 
 import kotlinx.cli.ArgParser
 import model.Command
-import model.exception.CommandNotSupportedException
 
 fun buildCommand(args: Array<String>): Command {
     return args.firstOrNull()?.let { commandName ->
@@ -18,7 +17,7 @@ fun buildCommand(args: Array<String>): Command {
             "write-tree" -> buildWriteTreeCommand(commandName)
             "commit-tree" -> buildCommitTreeCommand(optionsArgs, argsParser, commandName)
             "clone" -> buildCloneCommand(optionsArgs, argsParser, commandName)
-            else -> throw CommandNotSupportedException(commandName)
+            else -> throw RuntimeException("Command $commandName is not supported.")
         }
     } ?: throw RuntimeException("No command specified")
 }

@@ -3,7 +3,6 @@ package processcommand
 import model.Command
 import model.GitObjectType
 import model.Sha1Hex
-import model.exception.InvalidSha1Exception
 import utils.*
 import java.nio.file.Files
 import java.nio.file.Path

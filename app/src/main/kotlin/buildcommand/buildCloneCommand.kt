@@ -1,5 +1,6 @@
 package buildcommand
 
+import io.ktor.http.*
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import model.Command
@@ -21,7 +22,8 @@ fun buildCloneCommand(
 
     argsParser.parse(args)
 
-    // TODO: Validate url/dir here
+    parseUrl(repoUrl)
+        ?: throw RuntimeException("Invalid repo url: $repoUrl")
 
     return Command.Clone(
         commandName = commandName,

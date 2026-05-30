@@ -51,14 +51,9 @@ fun ByteArray.sha1(): ByteArray {
 }
 
 fun ByteArray.sha1Hex(): String {
-    val sha = Sha1Hex(
-        value = sha1().toHexString()
-    )
-    if (!sha.isValid()) {
-        throw RuntimeException("Invalid sha1: ${sha.value}")
-    }
-
-    return sha.value
+    return Sha1Hex.new(
+        sha = sha1().toHexString()
+    ).value
 }
 
 fun ByteArray.toBigEndianInt(offset: Int): Int? {

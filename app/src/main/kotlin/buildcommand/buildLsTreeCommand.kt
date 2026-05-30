@@ -5,7 +5,6 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import model.Command
 import model.Sha1Hex
-import model.exception.InvalidSha1Exception
 import utils.isValid
 
 fun buildLsTreeCommand(
@@ -26,10 +25,7 @@ fun buildLsTreeCommand(
 
     argsParser.parse(args)
 
-    val treeSha = Sha1Hex(value = sha)
-    if (!treeSha.isValid()) {
-        throw InvalidSha1Exception(sha)
-    }
+    val treeSha = Sha1Hex.new(sha)
 
     return Command.LsTree(
         commandName = commandName,
