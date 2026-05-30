@@ -9,15 +9,13 @@ import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import model.*
 import utils.*
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createParentDirectories
-import kotlin.io.path.writeLines
 
 fun processCloneCommand(command: Command.Clone) {
     command.run {
-        initRepo(targetDir)
+        initGitRepo(targetDir)
 
         val ktorClient = initKtorClient(repoUrl)
 
@@ -57,26 +55,6 @@ fun processCloneCommand(command: Command.Clone) {
 
         checkout(commitSha, targetDir)
     }
-}
-
-private fun initRepo(targetDir: String) {
-    val gitDirPath = gitPath(rootDir = targetDir)
-    gitDirPath.createDirectories()
-
-    listOf(
-        "objects",
-        "refs",
-        "refs/heads"
-    ).forEach { dir ->
-        gitDirPath
-            .resolve(dir)
-            .createDirectories()
-    }
-
-    val headFilePath = gitDirPath.resolve("HEAD")
-    headFilePath.writeLines(
-        lines = listOf("ref: refs/heads/master")
-    )
 }
 
 private fun initKtorClient(repoUrl: String): HttpClient {
