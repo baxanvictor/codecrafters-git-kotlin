@@ -10,9 +10,9 @@ fun buildGitObjectContent(
 ): ByteArray {
     return buildByteArrayFromInputs(
         inputs = listOf(
-            ByteArrayOutputStreamInput.ByteArrayInput(objectType.type.toByteArray()),
+            ByteArrayOutputStreamInput.ByteArrayInput(objectType.type.encodeToByteArray()),
             ByteArrayOutputStreamInput.IntInput(' '.code),
-            ByteArrayOutputStreamInput.ByteArrayInput(contentLength.toString().toByteArray()),
+            ByteArrayOutputStreamInput.ByteArrayInput(contentLength.toString().encodeToByteArray()),
             ByteArrayOutputStreamInput.IntInput(Constants.NULL_BYTE.code),
             ByteArrayOutputStreamInput.ByteArrayInput(content)
         )

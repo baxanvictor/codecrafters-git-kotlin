@@ -4,12 +4,14 @@ import model.Sha1Bytes
 import model.Sha1Hex
 import java.nio.file.Path
 
-fun Sha1Hex.toFullPath(): Path {
-    return Path.of("${Constants.GIT_ROOT_DIR}/${toObjectLocation()}")
+fun Sha1Hex.toFullPath(rootDir: String? = null): Path {
+    val rootDirPath = rootDir?.let { "$it/${Constants.GIT_OBJECTS_ROOT_DIR}" } ?: Constants.GIT_OBJECTS_ROOT_DIR
+    return Path.of(rootDirPath, toObjectLocation())
 }
 
-fun Sha1Hex.toDirPath(): Path {
-    return Path.of("${Constants.GIT_ROOT_DIR}/${toObjectDirectory()}")
+fun Sha1Hex.toDirPath(rootDir: String? = null): Path {
+    val rootDirPath = rootDir?.let { "$it/${Constants.GIT_OBJECTS_ROOT_DIR}" } ?: Constants.GIT_OBJECTS_ROOT_DIR
+    return Path.of("$rootDirPath/${toObjectDirectory()}")
 }
 
 fun Sha1Bytes.toSha1Hex(): Sha1Hex {
@@ -18,7 +20,7 @@ fun Sha1Bytes.toSha1Hex(): Sha1Hex {
     )
 }
 
-private fun Sha1Hex.toObjectLocation(): String {
+fun Sha1Hex.toObjectLocation(): String {
     return buildString {
         append(toObjectDirectory())
         append('/')

@@ -22,6 +22,8 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-cli-jvm:0.3.6")
+    implementation("io.ktor:ktor-client-core:3.5.0")
+    implementation("io.ktor:ktor-client-cio:3.5.0")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

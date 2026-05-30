@@ -50,4 +50,10 @@ sealed interface Command {
             val message: String?
         )
     }
+
+    data class Clone(
+        override val commandName: String,
+        val repoUrl: String,
+        val targetDir: String
+    ) : Command
 }

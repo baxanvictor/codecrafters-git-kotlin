@@ -14,7 +14,10 @@ fun processWriteTreeCommand(command: Command.WriteTree) {
     println(result.sha.value.toHexString())
 }
 
-private fun createTree(currentPath: Path): CreateTreeResult {
+fun createTree(
+    currentPath: Path,
+    writePath: Path? = null
+): CreateTreeResult {
     if (currentPath.isDirectory()) {
         Files.list(currentPath).use { paths ->
             val createTreeResult = paths
@@ -22,7 +25,7 @@ private fun createTree(currentPath: Path): CreateTreeResult {
                 .map { createTree(it) }
                 .toList()
 
-            val treeSha = writeTreeEntry( createTreeResult)
+            val treeSha = writeTreeEntry( createTreeResult, writePath)
 
             return CreateTreeResult(
                 mode = GitTreeEntryMode.DIRECTORY,
@@ -31,14 +34,18 @@ private fun createTree(currentPath: Path): CreateTreeResult {
             )
         }
     } else {
+        if (currentPath.notExists()) {
+            throw RuntimeException("Path does not exist: ${currentPath.absolute()}")
+        }
+
         val mode = when {
             currentPath.isRegularFile() -> GitTreeEntryMode.REGULAR_FILE
             currentPath.isExecutable() -> GitTreeEntryMode.EXECUTABLE_FILE
             currentPath.isSymbolicLink() -> GitTreeEntryMode.SYM_LINK
-            else -> throw RuntimeException("Unknown mode for path: ${currentPath.name}")
+            else -> throw RuntimeException("Unknown mode for path: ${currentPath.absolute()}")
         }
 
-        val sha = writeBlobEntry(currentPath)
+        val sha = writeBlobEntry(currentPath, writePath)
 
         return CreateTreeResult(
             mode = mode,
@@ -49,16 +56,17 @@ private fun createTree(currentPath: Path): CreateTreeResult {
 }
 
 private fun writeTreeEntry(
-    innerCreateTreeResults: List<CreateTreeResult>
+    innerCreateTreeResults: List<CreateTreeResult>,
+    writePath: Path?
 ): Sha1Bytes {
     val treeInnerObjects = innerCreateTreeResults
         .sortedBy { it.path.name }
         .map { result ->
             buildByteArrayFromInputs(
                 inputs = listOf(
-                    ByteArrayOutputStreamInput.ByteArrayInput(result.mode.mode.toByteArray()),
+                    ByteArrayOutputStreamInput.ByteArrayInput(result.mode.mode.encodeToByteArray()),
                     ByteArrayOutputStreamInput.IntInput(' '.code),
-                    ByteArrayOutputStreamInput.ByteArrayInput(result.path.name.toByteArray()),
+                    ByteArrayOutputStreamInput.ByteArrayInput(result.path.name.encodeToByteArray()),
                     ByteArrayOutputStreamInput.IntInput(Constants.NULL_BYTE.code),
                     ByteArrayOutputStreamInput.ByteArrayInput(result.sha.value)
                 )
@@ -67,24 +75,28 @@ private fun writeTreeEntry(
 
     return writeGitObject(
         objectType = GitObjectType.TREE,
-        innerContent = treeInnerObjects
+        innerContent = treeInnerObjects,
+        writePath = writePath
     )
 }
 
 private fun writeBlobEntry(
-    path: Path
+    path: Path,
+    writePath: Path?
 ): Sha1Bytes {
     val bytes = Files.readAllBytes(path)
 
     return writeGitObject(
         objectType = GitObjectType.BLOB,
-        innerContent = listOf(bytes)
+        innerContent = listOf(bytes),
+        writePath = writePath
     )
 }
 
 private fun writeGitObject(
     objectType: GitObjectType,
-    innerContent: List<ByteArray>
+    innerContent: List<ByteArray>,
+    writePath: Path?
 ): Sha1Bytes {
     val gitObjectContent = buildGitObjectContent(
         objectType = objectType,
@@ -94,10 +106,10 @@ private fun writeGitObject(
         )
     )
 
-    return writeGitObject(gitObjectContent)
+    return writeGitObject(gitObjectContent, writePath, objectType = objectType)
 }
 
-private data class CreateTreeResult(
+data class CreateTreeResult(
     val mode: GitTreeEntryMode,
     val sha: Sha1Bytes,
     val path: Path

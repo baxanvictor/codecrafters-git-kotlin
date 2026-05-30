@@ -1,14 +1,29 @@
 package utils
 
+import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
 
 fun ByteArray.zlibCompress(): ByteArray {
-    val output = ByteArray(size * 4)
-    val compressor = Deflater().apply {
-        setInput(this@zlibCompress)
-        finish()
-    }
-    val compressedDataLength = compressor.deflate(output)
+    return ByteArrayOutputStream().use { outputStream ->
+        val deflater = Deflater()
+        try {
+            deflater.setInput(this)
+            deflater.finish()
 
-    return output.copyOfRange(0, compressedDataLength)
+            val buffer = ByteArray(1024)
+
+            while (!deflater.finished()) {
+                val count = deflater.deflate(buffer)
+                if (count == 0 && !deflater.finished()) {
+                    throw RuntimeException("Truncated stream during zlib compression")
+                }
+
+                outputStream.write(buffer, 0, count)
+            }
+
+            outputStream.toByteArray()
+        } finally {
+            deflater.end()
+        }
+    }
 }

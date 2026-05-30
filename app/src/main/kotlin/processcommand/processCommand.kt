@@ -10,5 +10,6 @@ fun processCommand(command: Command) {
         is Command.LsTree -> processLsTreeCommand(command)
         is Command.WriteTree -> processWriteTreeCommand(command)
         is Command.CommitTree -> processCommitTreeCommand(command)
+        is Command.Clone -> processCloneCommand(command)
     }
 }
