@@ -307,20 +307,10 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
             val baseObject = readGitObjectFromShaHex(baseShaHex, rootDir = targetDir)
             val resolvedContent = baseObject.content.applyDelta(deltaResult.bytes)
 
-            val resolvedGitObject = buildGitObjectContent(
-                objectType = baseObject.type,
-                contentLength = resolvedContent.size,
-                content = resolvedContent
-            )
-
-            val resolvedObjectSha = resolvedGitObject.sha1().toHexString()
-
             writeGitObject(
-                gitObject = resolvedGitObject,
-                writePath = gitObjectsPath(
-                    sha = resolvedObjectSha,
-                    rootDir = targetDir
-                )
+                objectType = baseObject.type,
+                innerContent = listOf(resolvedContent),
+                rootDir = targetDir
             )
 
             offset = compressedStartOffset + deltaResult.compressedBytesRead.toInt()
@@ -332,21 +322,10 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
                 throw RuntimeException("Wrong number of bytes decompressed. Actual: $decompressedSize, should be: $size")
             }
 
-            val gitObject = buildGitObjectContent(
-                objectType = type,
-                contentLength = decompressResult.bytes.size,
-                content = decompressResult.bytes
-            )
-
-            val objectSha = gitObject.sha1().toHexString()
-
             writeGitObject(
                 objectType = type,
-                gitObject = gitObject,
-                writePath = gitObjectsPath(
-                    sha = objectSha,
-                    rootDir = targetDir
-                )
+                innerContent = listOf(decompressResult.bytes),
+                rootDir = targetDir
             )
 
             offset = dataStart + decompressResult.compressedBytesRead.toInt()
@@ -360,13 +339,13 @@ private fun writeGitRefs(refs: List<GitRef>, targetDir: String, commitSha: Strin
     val path = rootGitPath
         .resolve("refs/heads/master")
     path.createParentDirectories()
-    Files.writeString(path, "$commitSha\n")
+    path.writeString("$commitSha\n")
 
     val headPath = rootGitPath
         .resolve("HEAD")
     headPath.createParentDirectories()
 
-    Files.writeString(headPath, "ref: refs/heads/master\n")
+    headPath.writeString("ref: refs/heads/master\n")
 }
 
 private fun checkout(commitSha: String, targetDir: String) {
@@ -375,7 +354,7 @@ private fun checkout(commitSha: String, targetDir: String) {
         rootDir = targetDir
     )
 
-    val commitObject = Files.readAllBytes(commitObjectPath)
+    val commitObject = commitObjectPath.readAllBytes()
     val decompressedCommitObject = commitObject.zlibDecompress().bytes
 
     val nullByteIndex = decompressedCommitObject.indexOf(Constants.NULL_BYTE.code.toByte())
@@ -400,7 +379,7 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
 
     rootCheckoutDir.createDirectories()
 
-    val treeBytes = Files.readAllBytes(treePath)
+    val treeBytes = treePath.readAllBytes()
     val decompressedTreeBytes = treeBytes.zlibDecompress().bytes
     val entries = parseTreeContents(decompressedTreeBytes)
 
@@ -420,11 +399,13 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
                 rootDir = projectDir
             )
 
-            val blob = Files.readAllBytes(gitObjectPath)
+            val blob = gitObjectPath.readAllBytes()
             val decompressedBlob = blob.zlibDecompress().bytes
             val nullByteIndex = decompressedBlob.indexOf(Constants.NULL_BYTE.code.toByte())
 
-            Files.write(entryPath, decompressedBlob.copyOfRange(nullByteIndex + 1, decompressedBlob.size))
+            entryPath.writeBytes(
+                bytes = decompressedBlob.copyOfRange(nullByteIndex + 1, decompressedBlob.size)
+            )
         }
     }
 }

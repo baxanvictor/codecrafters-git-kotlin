@@ -7,17 +7,14 @@ import java.nio.file.Path
 import kotlin.io.path.*
 
 fun processWriteTreeCommand(command: Command.WriteTree) {
-    val currentPath = Path.of(".")
+    val currentPath = Path.of(Constants.CURRENT_DIR)
 
     val result = createTree(currentPath)
 
     println(result.sha.value.toHexString())
 }
 
-fun createTree(
-    currentPath: Path,
-    writePath: Path? = null
-): CreateTreeResult {
+fun createTree(currentPath: Path): CreateTreeResult {
     if (currentPath.isDirectory()) {
         Files.list(currentPath).use { paths ->
             val createTreeResult = paths
@@ -25,7 +22,7 @@ fun createTree(
                 .map { createTree(it) }
                 .toList()
 
-            val treeSha = writeTreeEntry( createTreeResult, writePath)
+            val treeSha = writeTreeEntry(createTreeResult)
 
             return CreateTreeResult(
                 mode = GitTreeEntryMode.DIRECTORY,
@@ -45,7 +42,7 @@ fun createTree(
             else -> throw RuntimeException("Unknown mode for path: ${currentPath.absolute()}")
         }
 
-        val sha = writeBlobEntry(currentPath, writePath)
+        val sha = writeBlobEntry(currentPath)
 
         return CreateTreeResult(
             mode = mode,
@@ -57,7 +54,7 @@ fun createTree(
 
 private fun writeTreeEntry(
     innerCreateTreeResults: List<CreateTreeResult>,
-    writePath: Path?
+    rootDir: String = Constants.CURRENT_DIR
 ): Sha1Bytes {
     val treeInnerObjects = innerCreateTreeResults
         .sortedBy { it.path.name }
@@ -76,37 +73,8 @@ private fun writeTreeEntry(
     return writeGitObject(
         objectType = GitObjectType.TREE,
         innerContent = treeInnerObjects,
-        writePath = writePath
+        rootDir = rootDir
     )
-}
-
-private fun writeBlobEntry(
-    path: Path,
-    writePath: Path?
-): Sha1Bytes {
-    val bytes = Files.readAllBytes(path)
-
-    return writeGitObject(
-        objectType = GitObjectType.BLOB,
-        innerContent = listOf(bytes),
-        writePath = writePath
-    )
-}
-
-private fun writeGitObject(
-    objectType: GitObjectType,
-    innerContent: List<ByteArray>,
-    writePath: Path?
-): Sha1Bytes {
-    val gitObjectContent = buildGitObjectContent(
-        objectType = objectType,
-        contentLength = innerContent.sumOf { it.size },
-        content = buildByteArrayFromInputs(
-            inputs = innerContent.map { ByteArrayOutputStreamInput.ByteArrayInput(it) }
-        )
-    )
-
-    return writeGitObject(gitObjectContent, writePath, objectType = objectType)
 }
 
 data class CreateTreeResult(

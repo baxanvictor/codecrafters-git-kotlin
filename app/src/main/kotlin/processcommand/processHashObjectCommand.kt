@@ -11,7 +11,7 @@ import java.nio.file.Path
 fun processHashObjectCommand(command: Command.HashObject) {
     command.run {
         val filePath = Path.of(filename)
-        val fileContents = Files.readAllBytes(filePath)
+        val fileContents = filePath.readAllBytes()
 
         val blobObjectContent = buildGitObjectContent(
             objectType = GitObjectType.BLOB,
@@ -19,16 +19,9 @@ fun processHashObjectCommand(command: Command.HashObject) {
             content = fileContents
         )
 
-        val sha1 = Sha1Hex(
-            value = blobObjectContent
-                .sha1()
-                .toHexString()
-        )
-        if (!sha1.isValid()) {
-            throw InvalidSha1Exception(sha1.value)
-        }
+        val sha = blobObjectContent.sha1Hex()
 
-        println(sha1.value)
+        println(sha)
 
         if (options.isWriteEnabled) {
             writeGitObject(blobObjectContent)

@@ -1,5 +1,6 @@
 package utils
 
+import model.Sha1Hex
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 
@@ -47,6 +48,17 @@ fun ByteArray.sha1(): ByteArray {
     return MessageDigest
         .getInstance("SHA-1")
         .digest(this)
+}
+
+fun ByteArray.sha1Hex(): String {
+    val sha = Sha1Hex(
+        value = sha1().toHexString()
+    )
+    if (!sha.isValid()) {
+        throw RuntimeException("Invalid sha1: ${sha.value}")
+    }
+
+    return sha.value
 }
 
 fun ByteArray.toBigEndianInt(offset: Int): Int? {

@@ -1,16 +1,18 @@
 package processcommand
 
-import model.*
+import model.Command
+import model.GitTreeEntry
+import model.GitTreeEntryMode
+import model.Sha1Bytes
 import utils.*
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 
 fun processLsTreeCommand(command: Command.LsTree) {
     command.run {
         val treePath = gitObjectsPath(
             sha = treeSha.value
         )
-        val treeBytes = Files.readAllBytes(treePath)
+        val treeBytes = treePath.readAllBytes()
         val decompressedTreeContents = treeBytes.zlibDecompress().bytes
         val treeEntries = parseTreeContents(contentBytes = decompressedTreeContents)
 

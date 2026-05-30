@@ -10,7 +10,7 @@ fun readGitObjectFromShaHex(shaHex: String, rootDir: String): GitObject {
         sha = shaHex,
         rootDir = rootDir
     )
-    val compressed = Files.readAllBytes(objectPath)
+    val compressed = objectPath.readAllBytes()
     val raw = compressed.zlibDecompress().bytes
 
     val nullIndex = raw.indexOf(Constants.NULL_BYTE.code.toByte())
