@@ -18,11 +18,11 @@ fun buildCatFileCommand(
 
         parse(args)
 
-        val sha1 = Sha1Hex.new(
-            sha = prettyPrintSha1 ?: throw RuntimeException("Missing $commandName pretty print arg value")
+        Command.CatFile.Options(
+            sha = Sha1Hex.new(
+                sha = prettyPrintSha1 ?: throw RuntimeException("Missing $commandName pretty print arg value")
+            )
         )
-
-        Command.CatFile.Options(sha = sha1)
     }
 
     return Command.CatFile(

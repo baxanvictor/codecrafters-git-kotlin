@@ -5,7 +5,6 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import model.Command
 import model.Sha1Hex
-import utils.isValid
 
 fun buildLsTreeCommand(
     args: Array<String>,
@@ -25,11 +24,9 @@ fun buildLsTreeCommand(
 
     argsParser.parse(args)
 
-    val treeSha = Sha1Hex.new(sha)
-
     return Command.LsTree(
         commandName = commandName,
-        treeSha = treeSha,
+        treeSha = Sha1Hex.new(sha),
         options = Command.LsTree.Options(
             nameOnly = nameOnly
         )

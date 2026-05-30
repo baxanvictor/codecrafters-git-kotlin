@@ -9,5 +9,6 @@ fun processCatFileCommand(command: Command.CatFile) {
         .bytes
         .decodeToString()
         .substringAfter(Constants.NULL_BYTE)
+
     print(content)
 }

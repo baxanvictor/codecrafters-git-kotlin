@@ -2,9 +2,10 @@ package processcommand
 
 import model.Command
 import model.GitObjectType
-import model.Sha1Hex
-import utils.*
-import java.nio.file.Files
+import utils.buildGitObjectContent
+import utils.readAllBytes
+import utils.sha1Hex
+import utils.writeGitObject
 import java.nio.file.Path
 
 fun processHashObjectCommand(command: Command.HashObject) {

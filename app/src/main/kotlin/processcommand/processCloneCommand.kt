@@ -299,7 +299,9 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
 
             val decompressedSize = decompressResult.bytes.size
             if (decompressResult.bytes.size != size) {
-                throw RuntimeException("Wrong number of bytes decompressed. Actual: $decompressedSize, should be: $size")
+                throw RuntimeException(
+                    "Wrong number of bytes decompressed. Actual: $decompressedSize, should be: $size"
+                )
             }
 
             writeGitObject(
@@ -312,6 +314,62 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
         }
     }
 }
+
+private fun extractGitRef(ref: String): GitRef? {
+    val refPieces = ref.trim()
+        .split(Constants.EMPTY_SPACE)
+        .filter { it.isNotBlank() }
+    if (refPieces.size != 2) {
+        throw RuntimeException("Wrong ref format: ${ref.first()}")
+    }
+
+    return when (val name = refPieces.last()) {
+        "version" -> null
+        "HEAD" -> GitRef.Head(commitSha = refPieces.first())
+        else -> GitRef.BranchTip(
+            name = name,
+            commitSha = refPieces.first()
+        )
+    }
+}
+
+private fun GitDiscoveryResult.findCommitSha(): String {
+    val mainBranch = capabilities
+        .firstOrNull { capability ->
+            capability.startsWith("symref=HEAD:refs/heads/")
+        }?.let { capability ->
+            val pieces = capability.split(':')
+            if (pieces.size != 2) {
+                return@let null
+            }
+
+            pieces.last()
+        }
+        ?: refs
+            .firstOrNull { it.name == "refs/heads/master" }
+            ?.name
+        ?: refs
+            .firstOrNull { it.name == "refs/heads/main" }
+            ?.name
+        ?: refs
+            .firstOrNull { it.name == "HEAD" }
+            ?.name
+        ?: throw RuntimeException("No main or HEAD branch capability or git ref")
+
+    return refs
+        .firstOrNull { it.name == mainBranch }
+        ?.commitSha
+        ?: throw RuntimeException("No commit sha found for identifier main branch: $mainBranch")
+}
+
+private fun encodePktLine(input: String): ByteArray {
+    val inputBytes = input.encodeToByteArray()
+    val totalLength = inputBytes.size + 4
+    val lengthPrefix = totalLength.toString(16).padStart(4, '0')
+    return lengthPrefix.encodeToByteArray() + inputBytes
+}
+
+private fun encodeFlushPkt(): ByteArray = "0000".encodeToByteArray()
 
 private fun writeGitRefs(refs: List<GitRef>, targetDir: String) {
     val rootGitPath = gitPath(rootDir = targetDir)
@@ -387,59 +445,3 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
         }
     }
 }
-
-private fun extractGitRef(ref: String): GitRef? {
-    val refPieces = ref.trim()
-        .split(Constants.EMPTY_SPACE)
-        .filter { it.isNotBlank() }
-    if (refPieces.size != 2) {
-        throw RuntimeException("Wrong ref format: ${ref.first()}")
-    }
-
-    return when (val name = refPieces.last()) {
-        "version" -> null
-        "HEAD" -> GitRef.Head(commitSha = refPieces.first())
-        else -> GitRef.BranchTip(
-            name = name,
-            commitSha = refPieces.first()
-        )
-    }
-}
-
-private fun GitDiscoveryResult.findCommitSha(): String {
-    val mainBranch = capabilities
-        .firstOrNull { capability ->
-            capability.startsWith("symref=HEAD:refs/heads/")
-        }?.let { capability ->
-            val pieces = capability.split(':')
-            if (pieces.size != 2) {
-                return@let null
-            }
-
-            pieces.last()
-        }
-        ?: refs
-            .firstOrNull { it.name == "refs/heads/master" }
-            ?.name
-        ?: refs
-            .firstOrNull { it.name == "refs/heads/main" }
-            ?.name
-        ?: refs
-            .firstOrNull { it.name == "HEAD" }
-            ?.name
-        ?: throw RuntimeException("No main or HEAD branch capability or git ref")
-
-    return refs
-        .firstOrNull { it.name == mainBranch }
-        ?.commitSha
-        ?: throw RuntimeException("No commit sha found for identifier main branch: $mainBranch")
-}
-
-private fun encodePktLine(input: String): ByteArray {
-    val inputBytes = input.encodeToByteArray()
-    val totalLength = inputBytes.size + 4
-    val lengthPrefix = totalLength.toString(16).padStart(4, '0')
-    return lengthPrefix.encodeToByteArray() + inputBytes
-}
-
-private fun encodeFlushPkt(): ByteArray = "0000".encodeToByteArray()
