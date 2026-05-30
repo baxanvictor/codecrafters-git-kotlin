@@ -60,7 +60,7 @@ fun processCloneCommand(command: Command.Clone) {
 }
 
 private fun initRepo(targetDir: String) {
-    val gitDirPath = Path.of(targetDir, ".git")
+    val gitDirPath = gitPath(rootDir = targetDir)
     gitDirPath.createDirectories()
 
     listOf(
@@ -313,10 +313,15 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
                 content = resolvedContent
             )
 
-            writeGitObject(resolvedGitObject, writePath = Path.of(targetDir)
-                .resolve(Constants.GIT_OBJECTS_ROOT_DIR)
-                .resolve(Sha1Hex(resolvedGitObject.sha1().toHexString()).toObjectLocation()),
-                objectType = baseObject.type)
+            val resolvedObjectSha = resolvedGitObject.sha1().toHexString()
+
+            writeGitObject(
+                gitObject = resolvedGitObject,
+                writePath = gitObjectsPath(
+                    sha = resolvedObjectSha,
+                    rootDir = targetDir
+                )
+            )
 
             offset = compressedStartOffset + deltaResult.compressedBytesRead.toInt()
         } else {
@@ -333,10 +338,16 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
                 content = decompressResult.bytes
             )
 
-            writeGitObject(gitObject, writePath = Path.of(targetDir)
-                .resolve(Constants.GIT_OBJECTS_ROOT_DIR)
-                .resolve(Sha1Hex(gitObject.sha1().toHexString()).toObjectLocation())
-                , objectType = type)
+            val objectSha = gitObject.sha1().toHexString()
+
+            writeGitObject(
+                objectType = type,
+                gitObject = gitObject,
+                writePath = gitObjectsPath(
+                    sha = objectSha,
+                    rootDir = targetDir
+                )
+            )
 
             offset = dataStart + decompressResult.compressedBytesRead.toInt()
         }
@@ -344,8 +355,7 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
 }
 
 private fun writeGitRefs(refs: List<GitRef>, targetDir: String, commitSha: String) {
-    val rootGitPath = Path.of(targetDir)
-        .resolve(".git")
+    val rootGitPath = gitPath(rootDir = targetDir)
 
     val path = rootGitPath
         .resolve("refs/heads/master")
@@ -360,12 +370,10 @@ private fun writeGitRefs(refs: List<GitRef>, targetDir: String, commitSha: Strin
 }
 
 private fun checkout(commitSha: String, targetDir: String) {
-    val commitObjectPath = Path
-        .of(targetDir)
-        .resolve(".git")
-        .resolve("objects")
-        .resolve(commitSha.take(2))
-        .resolve(commitSha.drop(2))
+    val commitObjectPath = gitObjectsPath(
+        sha = commitSha,
+        rootDir = targetDir
+    )
 
     val commitObject = Files.readAllBytes(commitObjectPath)
     val decompressedCommitObject = commitObject.zlibDecompress().bytes
@@ -379,19 +387,16 @@ private fun checkout(commitSha: String, targetDir: String) {
     val treeShaBytes = decompressedCommitObject.copyOfRange(treeShaStart, treeShaStart + 40)
 
     val treeSha = treeShaBytes.decodeToString()
-    val rootCheckoutDir = Path
-        .of(targetDir)
+    val rootCheckoutDir = rootDirPath(rootDir = targetDir)
 
     checkoutTree(treeSha, targetDir, rootCheckoutDir)
 }
 
 private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: Path) {
-    val treePath = Path
-        .of(projectDir)
-        .resolve(".git")
-        .resolve("objects")
-        .resolve(treeSha.take(2))
-        .resolve(treeSha.drop(2))
+    val treePath = gitObjectsPath(
+        sha = treeSha,
+        rootDir = projectDir
+    )
 
     rootCheckoutDir.createDirectories()
 
@@ -410,12 +415,10 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
                 rootCheckoutDir = entryPath
             )
         } else {
-            val gitObjectPath = Path
-                .of(projectDir)
-                .resolve(".git")
-                .resolve("objects")
-                .resolve(entrySha.take(2))
-                .resolve(entrySha.drop(2))
+            val gitObjectPath = gitObjectsPath(
+                sha = entrySha,
+                rootDir = projectDir
+            )
 
             val blob = Files.readAllBytes(gitObjectPath)
             val decompressedBlob = blob.zlibDecompress().bytes
