@@ -62,7 +62,7 @@ private fun writeTreeEntry(
             buildByteArrayFromInputs(
                 inputs = listOf(
                     ByteArrayOutputStreamInput.ByteArrayInput(result.mode.mode.encodeToByteArray()),
-                    ByteArrayOutputStreamInput.IntInput(' '.code),
+                    ByteArrayOutputStreamInput.IntInput(Constants.EMPTY_SPACE.code),
                     ByteArrayOutputStreamInput.ByteArrayInput(result.path.name.encodeToByteArray()),
                     ByteArrayOutputStreamInput.IntInput(Constants.NULL_BYTE.code),
                     ByteArrayOutputStreamInput.ByteArrayInput(result.sha.value)

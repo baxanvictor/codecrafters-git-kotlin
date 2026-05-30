@@ -9,12 +9,9 @@ import java.nio.charset.StandardCharsets
 
 fun processLsTreeCommand(command: Command.LsTree) {
     command.run {
-        val treePath = gitObjectsPath(
-            sha = treeSha.value
-        )
-        val treeBytes = treePath.readAllBytes()
-        val decompressedTreeContents = treeBytes.zlibDecompress().bytes
-        val treeEntries = parseTreeContents(contentBytes = decompressedTreeContents)
+        val treeObject = readDecompressedGitObject(sha = treeSha.value).bytes
+
+        val treeEntries = parseTreeContents(contentBytes = treeObject)
 
         if (options.nameOnly) {
             treeEntries.forEach { entry ->
@@ -25,11 +22,11 @@ fun processLsTreeCommand(command: Command.LsTree) {
 }
 
 fun parseTreeContents(contentBytes: ByteArray): List<GitTreeEntry> {
-    val nullByteCodeAsByte = Constants.NULL_BYTE.code.toByte()
-    val emptySpaceAsByte = ' '.code.toByte()
+    val nullByte = nullByte()
+    val emptySpaceByte = emptySpaceByte()
 
-    val header = contentBytes.byteArrayBefore(nullByteCodeAsByte)
-    val headerPieces = header.split(emptySpaceAsByte)
+    val header = contentBytes.byteArrayBefore(nullByte)
+    val headerPieces = header.split(emptySpaceByte)
 
     if (headerPieces.size != 2) {
         throw RuntimeException("Invalid tree header format: $header")
@@ -44,7 +41,7 @@ fun parseTreeContents(contentBytes: ByteArray): List<GitTreeEntry> {
     val contentsSize = secondHeaderPieceAsString.toIntOrNull()
         ?: throw RuntimeException("Invalid contents size value: $secondHeaderPieceAsString")
 
-    val treeContents = contentBytes.byteArrayAfter(nullByteCodeAsByte)
+    val treeContents = contentBytes.byteArrayAfter(nullByte)
 
     if (treeContents.size != contentsSize) {
         throw RuntimeException("Wrong contents size: ${treeContents.size}")
@@ -55,7 +52,7 @@ fun parseTreeContents(contentBytes: ByteArray): List<GitTreeEntry> {
 
         while (index < treeContents.size) {
             val nextEmptySpaceIndex = treeContents.indexOfAfterIndex(
-                byte = ' '.code.toByte(),
+                byte = emptySpaceByte(),
                 index = index
             )
 
@@ -74,7 +71,7 @@ fun parseTreeContents(contentBytes: ByteArray): List<GitTreeEntry> {
             index = nextEmptySpaceIndex + 1
 
             val nextNullByteIndex = treeContents.indexOfAfterIndex(
-                byte = Constants.NULL_BYTE.code.toByte(),
+                byte = nullByte,
                 index = index
             )
 

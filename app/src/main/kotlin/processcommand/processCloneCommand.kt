@@ -189,7 +189,7 @@ private fun parsePktLines(lines: List<PktLine>): GitDiscoveryResult {
                             refAndCapabilities
                                 .last()
                                 .trim()
-                                .split(' ')
+                                .split(Constants.EMPTY_SPACE)
                                 .filter { it.isNotBlank() }
                         )
                     }
@@ -349,21 +349,18 @@ private fun writeGitRefs(refs: List<GitRef>, targetDir: String, commitSha: Strin
 }
 
 private fun checkout(commitSha: String, targetDir: String) {
-    val commitObjectPath = gitObjectsPath(
+    val commitObject = readDecompressedGitObject(
         sha = commitSha,
         rootDir = targetDir
-    )
+    ).bytes
 
-    val commitObject = commitObjectPath.readAllBytes()
-    val decompressedCommitObject = commitObject.zlibDecompress().bytes
-
-    val nullByteIndex = decompressedCommitObject.indexOf(Constants.NULL_BYTE.code.toByte())
+    val nullByteIndex = commitObject.indexOf(nullByte())
     if (nullByteIndex == -1) {
         throw RuntimeException("Invalid commit object header")
     }
 
     val treeShaStart = nullByteIndex + 6
-    val treeShaBytes = decompressedCommitObject.copyOfRange(treeShaStart, treeShaStart + 40)
+    val treeShaBytes = commitObject.copyOfRange(treeShaStart, treeShaStart + 40)
 
     val treeSha = treeShaBytes.decodeToString()
     val rootCheckoutDir = rootDirPath(rootDir = targetDir)
@@ -372,16 +369,13 @@ private fun checkout(commitSha: String, targetDir: String) {
 }
 
 private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: Path) {
-    val treePath = gitObjectsPath(
-        sha = treeSha,
-        rootDir = projectDir
-    )
-
     rootCheckoutDir.createDirectories()
 
-    val treeBytes = treePath.readAllBytes()
-    val decompressedTreeBytes = treeBytes.zlibDecompress().bytes
-    val entries = parseTreeContents(decompressedTreeBytes)
+    val treeObject = readDecompressedGitObject(
+        sha = treeSha,
+        rootDir = projectDir
+    ).bytes
+    val entries = parseTreeContents(treeObject)
 
     for (entry in entries) {
         val entryPath = rootCheckoutDir.resolve(entry.fsEntryName)
@@ -394,17 +388,14 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
                 rootCheckoutDir = entryPath
             )
         } else {
-            val gitObjectPath = gitObjectsPath(
+            val blobObject = readDecompressedGitObject(
                 sha = entrySha,
                 rootDir = projectDir
-            )
+            ).bytes
 
-            val blob = gitObjectPath.readAllBytes()
-            val decompressedBlob = blob.zlibDecompress().bytes
-            val nullByteIndex = decompressedBlob.indexOf(Constants.NULL_BYTE.code.toByte())
-
+            val nullByteIndex = blobObject.indexOf(nullByte())
             entryPath.writeBytes(
-                bytes = decompressedBlob.copyOfRange(nullByteIndex + 1, decompressedBlob.size)
+                bytes = blobObject.copyOfRange(nullByteIndex + 1, blobObject.size)
             )
         }
     }
@@ -412,7 +403,7 @@ private fun checkoutTree(treeSha: String, projectDir: String, rootCheckoutDir: P
 
 private fun extractGitRef(ref: String): GitRef {
     val refPieces = ref.trim()
-        .split(' ')
+        .split(Constants.EMPTY_SPACE)
         .filter { it.isNotBlank() }
     if (refPieces.size != 2) {
         throw RuntimeException("Wrong ref format: ${ref.first()}")

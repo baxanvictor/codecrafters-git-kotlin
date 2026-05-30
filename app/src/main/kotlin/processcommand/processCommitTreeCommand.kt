@@ -1,6 +1,7 @@
 package processcommand
 
 import model.*
+import utils.Constants
 import utils.buildGitObjectContent
 import utils.toFormattedCommitTimestamp
 import utils.toSha1Hex
@@ -25,12 +26,12 @@ fun processCommitTreeCommand(command: Command.CommitTree) {
 private fun GitCommit.toCommitObject(): ByteArray {
     val commitContent = buildString {
         append(GitObjectType.TREE.type)
-        append(' ')
+        append(Constants.EMPTY_SPACE)
         append(sha.value)
         append('\n')
         parentSha?.let { parentSha ->
             append("parent")
-            append(' ')
+            append(Constants.EMPTY_SPACE)
             append(parentSha.value)
         }
         append('\n')

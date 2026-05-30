@@ -2,26 +2,22 @@ package utils
 
 import model.GitObject
 import model.GitObjectType
-import model.Sha1Hex
-import java.nio.file.Files
 
 fun readGitObjectFromShaHex(shaHex: String, rootDir: String): GitObject {
-    val objectPath = gitObjectsPath(
+    val gitObjectBytes = readDecompressedGitObject(
         sha = shaHex,
         rootDir = rootDir
-    )
-    val compressed = objectPath.readAllBytes()
-    val raw = compressed.zlibDecompress().bytes
+    ).bytes
 
-    val nullIndex = raw.indexOf(Constants.NULL_BYTE.code.toByte())
+    val nullIndex = gitObjectBytes.indexOf(nullByte())
     if (nullIndex == -1) {
         throw RuntimeException("Invalid git object header for $shaHex")
     }
 
-    val header = raw.copyOfRange(0, nullIndex).decodeToString()
-    val content = raw.copyOfRange(nullIndex + 1, raw.size)
+    val header = gitObjectBytes.copyOfRange(0, nullIndex).decodeToString()
+    val content = gitObjectBytes.copyOfRange(nullIndex + 1, gitObjectBytes.size)
 
-    val headerParts = header.split(' ')
+    val headerParts = header.split(Constants.EMPTY_SPACE)
     if (headerParts.size != 2) {
         throw RuntimeException("Invalid git object header: $header")
     }

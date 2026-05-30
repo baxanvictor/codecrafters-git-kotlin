@@ -2,18 +2,10 @@ package processcommand
 
 import model.Command
 import utils.Constants
-import utils.gitObjectsPath
-import utils.readAllBytes
-import utils.zlibDecompress
-import java.nio.file.Files
+import utils.readDecompressedGitObject
 
 fun processCatFileCommand(command: Command.CatFile) {
-    val path = gitObjectsPath(
-        sha = command.options.sha.value
-    )
-    val rawBytes = path.readAllBytes()
-    val content = rawBytes
-        .zlibDecompress()
+    val content = readDecompressedGitObject(sha = command.options.sha.value)
         .bytes
         .decodeToString()
         .substringAfter(Constants.NULL_BYTE)
