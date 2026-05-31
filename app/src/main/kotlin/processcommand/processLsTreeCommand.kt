@@ -5,7 +5,6 @@ import model.GitTreeEntry
 import model.GitTreeEntryMode
 import model.Sha1Bytes
 import utils.*
-import java.nio.charset.StandardCharsets
 
 fun processLsTreeCommand(command: Command.LsTree) {
     command.run {
@@ -32,12 +31,12 @@ fun parseTreeContents(contentBytes: ByteArray): List<GitTreeEntry> {
         throw RuntimeException("Invalid tree header format: $header")
     }
 
-    val firstHeaderPieceAsString = headerPieces.first().toString(StandardCharsets.UTF_8)
+    val firstHeaderPieceAsString = headerPieces.first().decodeToString()
     if (firstHeaderPieceAsString != "tree") {
         throw RuntimeException("Invalid tree header name: $firstHeaderPieceAsString")
     }
 
-    val secondHeaderPieceAsString = headerPieces[1].toString(StandardCharsets.UTF_8)
+    val secondHeaderPieceAsString = headerPieces[1].decodeToString()
     val contentsSize = secondHeaderPieceAsString.toIntOrNull()
         ?: throw RuntimeException("Invalid contents size value: $secondHeaderPieceAsString")
 
