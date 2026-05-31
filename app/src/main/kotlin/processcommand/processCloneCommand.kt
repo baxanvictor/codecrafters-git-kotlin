@@ -215,8 +215,8 @@ private fun parseNegotiateUploadPackPktLines(lines: List<PktLine>): ByteArray {
                         throw RuntimeException("First pack chunk is too small. Size is ${actualPayload.size}")
                     }
 
-                    val prefix = actualPayload.copyOfRange(0, 4)
-                    if (prefix.decodeToString() != "PACK") {
+                    val prefix = actualPayload.extractPackFileStart()
+                    if (prefix != Constants.PACK_FILE_START) {
                         throw RuntimeException("Invalid pack file start: $prefix")
                     }
                 }
@@ -235,11 +235,11 @@ private fun parseNegotiateUploadPackPktLines(lines: List<PktLine>): ByteArray {
 
 private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: String) {
     if (packFile.size < 12) {
-        throw RuntimeException("pack file is too short. Its size is ${packFile.size}")
+        throw RuntimeException("Pack file is too short. Its size is ${packFile.size}")
     }
 
-    val packFileStart = packFile.copyOfRange(0, 4).decodeToString()
-    if (packFileStart != "PACK") {
+    val packFileStart = packFile.extractPackFileStart()
+    if (packFileStart != Constants.PACK_FILE_START) {
         throw RuntimeException("Invalid pack file start: $packFileStart")
     }
 
@@ -315,12 +315,18 @@ private fun parsePackFileAndWriteGitObjects(packFile: ByteArray, targetDir: Stri
     }
 }
 
+private fun ByteArray.extractPackFileStart(): String {
+    return this
+        .copyOfRange(0, 4)
+        .decodeToString()
+}
+
 private fun extractGitRef(ref: String): GitRef? {
     val refPieces = ref.trim()
         .split(Constants.EMPTY_SPACE)
         .filter { it.isNotBlank() }
     if (refPieces.size != 2) {
-        throw RuntimeException("Wrong ref format: ${ref.first()}")
+        throw RuntimeException("Wrong ref format: $ref")
     }
 
     return when (val name = refPieces.last()) {
