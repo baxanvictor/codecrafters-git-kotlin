@@ -59,10 +59,12 @@ fun parseTreeContents(contentBytes: ByteArray): List<GitTreeEntry> {
                 throw RuntimeException("No more empty spaces, but there are still bytes to read")
             }
 
-            val modeValue = treeContents.copyOfRange(index, nextEmptySpaceIndex)
+            val modeValue = treeContents
+                .copyOfRange(index, nextEmptySpaceIndex)
+                .decodeToString()
             val mode = runCatching {
                 GitTreeEntryMode.entries.firstOrNull { entryMode ->
-                    entryMode.mode == modeValue.decodeToString()
+                    entryMode.mode == modeValue
                 }
             }.getOrNull()
                 ?: throw RuntimeException("Invalid git tree entry mode: $modeValue")
